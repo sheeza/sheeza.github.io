@@ -1,7 +1,28 @@
 <!DOCTYPE html>
 <html>
 <body>
-<h1>Hello World</h1>
-<p>I'm hosted with GitHub Pages.</p>
+<h1>Static keyword</h1>
+<p>
+Basically, beforefieldinit means "the type can be initialized at any point before any static fields are referenced." In theory that means it can be very lazily initialized - if you call a static method which doesn't touch any fields, the JIT doesn't need to initialize the type.
+
+In practice it means that the class is initialized earlier than it would be otherwise - it's okay for it to be initialized at the start of the first method which might use it. Compare this with types which don't have beforefieldinit applied to them, where the type initialization has to occur immediately before the first actual use.
+
+
+
+What the beforefieldinit attribute does is define under what conditions the CLR can and must execute the class’s type initializer. When beforefieldinit is not present, a type’s initializer method is triggered by any of the following events:
+
+    First access to any static field of that type
+    First invocation of any static method of that type
+    First invocation of any instance or virtual method of that type if it is a value type
+    First invocation of any constructor for that type.
+
+What this basically means is that before the type is used in any way, the type initializer method must be executed. It therefore makes good sense that this attribute is not applied to classes which contain an explicit type constructor. As the CLR doesn’t know what impact the type constructor may have on the class, or on any other component of the program for that matter, it must execute it right before the class is used in any way. This means that the type constructor’s execution is both reliable and predictable.
+
+
+However, if the only job of a type initializer is to assign values to static variables, then we don’t necessarily need to be as demanding as to when the assignment takes place. All we require from the CLR is that the variable is assigned before we access it for the first time. And indeed, this is the impact that beforefieldinit has on a class. To quote the CIL spec, beforefieldinit ensures that…
+
+    …the type’s initializer method is executed at, or sometime before, first access to any static field defined for that type.
+
+This gives the CLR significantly more freedom as to when it wishes to assign static fields. Although we cannot be 100% sure of when the assignment will take place, the assumption here is that the CLR will act when it feels the time is right, which should in theory improve application efficiency.</p>
 </body>
 </html>
